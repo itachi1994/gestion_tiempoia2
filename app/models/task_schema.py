@@ -8,11 +8,12 @@ class TaskSchema(ma.Schema):
     due_date      = fields.DateTime(required=True)
     priority      = fields.String(validate=validate.OneOf(['low', 'medium', 'high']), allow_none=True)
     status        = fields.String(validate=validate.OneOf(['pending', 'done']), load_default='pending')
+    created_at = fields.DateTime()
 
     course_load_id = fields.Integer(required=True)
     subjects_id    = fields.Integer(required=True)
 
     reminder_date  = fields.DateTime(allow_none=True)
-    reminder_sent  = fields.Boolean(dump_only=True)
+    reminder_sent  = fields.Boolean(required=True)
 
     user_id        = fields.Integer(dump_only=True)
