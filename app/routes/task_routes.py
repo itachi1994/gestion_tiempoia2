@@ -122,3 +122,23 @@ def update_task_status(task_id):
     task.status = status
     db.session.commit()
     return jsonify({"message": f"Task status updated to '{status}'."}), 200
+
+@task_bp.route('/task/calendar', methods=['GET'])
+@jwt_required()
+def get_tasks_for_calendar():
+    user_id = get_jwt_identity()
+
+    results = db.session.query(Task, Subject).join(
+        Subject, Task.subjects_id == Subject.id
+    ).filter(Task.user_id == user_id).all()
+
+    data = []
+    for task, subject in results:
+        data.append({
+            "id": task.id,
+            "title": f"{task.title} - {subject.name}",
+            "start": task.due_date.isoformat(),
+            "end": task.due_date.isoformat()
+        })
+
+    return jsonify(data), 200
