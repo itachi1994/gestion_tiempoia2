@@ -27,12 +27,10 @@ def register():
 
     return jsonify({"message": "Usuario registrado exitosamente."}), 201
 
-#  Login
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
 
-    # Debug opcional para verificar contexto
     print("DEBUG - App context:", current_app.name)
 
     user = User.query.filter_by(email=data['email']).first()
@@ -42,4 +40,8 @@ def login():
 
     access_token = create_access_token(identity=str(user.id))
 
-    return jsonify({"token": access_token, "message": "Inicio de sesión exitoso."})
+    return jsonify({
+        "token": access_token,
+        "email": user.email,
+        "message": "Inicio de sesión exitoso."
+    })

@@ -10,6 +10,14 @@ from datetime import datetime, timedelta
 progress_bp = Blueprint('progress', __name__)
 progress_schema = ProgressReportSchema()
 
+@progress_bp.route('/progress', methods=['GET'])
+@jwt_required()
+def get_progress_reports():
+    user_id = get_jwt_identity()
+    reports = ProgressReport.query.filter_by(user_id=user_id).order_by(ProgressReport.created_at.desc()).all()
+    return jsonify(progress_schema.dump(reports, many=True)), 200
+
+
 @progress_bp.route('/progress', methods=['POST'])
 @jwt_required()
 def generate_progress_report():
