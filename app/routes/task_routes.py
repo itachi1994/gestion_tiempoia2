@@ -143,3 +143,12 @@ def get_tasks_for_calendar():
         })
 
     return jsonify(data), 200
+
+@task_bp.route('/task/<int:task_id>', methods=['GET'])
+@jwt_required()
+def get_task_by_id(task_id):
+    user_id = get_jwt_identity()
+    task = Task.query.filter_by(id=task_id, user_id=user_id).first()
+    if not task:
+        return jsonify({"message": "Task not found"}), 404
+    return task_schema.jsonify(task), 200
