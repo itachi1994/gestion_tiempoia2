@@ -12,7 +12,7 @@ class Config:
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'clave-jwt-secreta-por-defecto-solo-para-desarrollo')
 
     # Configuración JWT
-    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))  # 1 hora
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 10800))  # 1 hora
     PROPAGATE_EXCEPTIONS = True
 
     # Configuración de la base de datos
