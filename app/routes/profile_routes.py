@@ -46,3 +46,12 @@ def manage_profile():
         "message": "Perfil actualizado exitosamente",
         "profile": profile_schema.dump(profile)
     }), 200 if request.method == 'PUT' else 201
+
+@profile_bp.route('/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    current_user_id = get_jwt_identity()
+    profile = UserProfile.query.filter_by(user_id=current_user_id).first()
+    if not profile:
+        return jsonify({"message": "Perfil no encontrado"}), 404
+    return jsonify(profile_schema.dump(profile)), 200
