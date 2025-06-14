@@ -2,7 +2,7 @@ import requests
 import os
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")  # Debes poner tu clave en el entorno
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY") 
 
 def generate_schedule_with_deepseek(prompt):
     headers = {

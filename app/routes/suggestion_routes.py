@@ -40,7 +40,6 @@ def generate_weekly_suggestions():
     if slots:
         suggestions.append("Distribuye tus tareas en los espacios disponibles que marcaste.")
 
-    # Generar entrada persistente
     suggestion_obj = WeeklySuggestion(
         user_id=user_id,
         content="\n".join(suggestions)
