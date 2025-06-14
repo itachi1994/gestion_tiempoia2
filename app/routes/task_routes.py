@@ -18,6 +18,9 @@ def create_task():
     if errors:
         return jsonify(errors), 400
 
+    # Elimina course_load_id del dict si existe
+    data.pop('course_load_id', None)
+
     task = Task(user_id=user_id, **data)
     db.session.add(task)
     db.session.commit()

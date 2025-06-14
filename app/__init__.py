@@ -12,14 +12,12 @@ from .extensions import db, bcrypt, ma, jwt, migrate, mail
 
 from app.routes.availability_routes import availability_bp
 from app.routes.subject_routes import subject_bp
-from app.routes.load_routes import load_bp
 from app.routes.habit_routes import habit_bp
 from app.routes.planning_routes import planning_bp
 from app.routes.task_routes import task_bp
 from app.routes.suggestion_routes import suggestion_bp
 from app.routes.progress_routes import progress_bp
 from app.routes.dashboard_routes import dashboard_bp
-from app.routes.tips_routes import tips_bp
 from app.routes.calendar_routes import calendar_bp
 
 mail = Mail()
@@ -50,14 +48,13 @@ def create_app():
     # Registrar blueprints
     app.register_blueprint(availability_bp, url_prefix='/api')
     app.register_blueprint(subject_bp, url_prefix='/api')
-    app.register_blueprint(load_bp, url_prefix='/api')
+    # app.register_blueprint(load_bp, url_prefix='/api')
     app.register_blueprint(habit_bp, url_prefix='/api')
     app.register_blueprint(planning_bp, url_prefix='/api')
     app.register_blueprint(task_bp, url_prefix='/api')
     app.register_blueprint(suggestion_bp, url_prefix='/api')
     app.register_blueprint(progress_bp, url_prefix='/api')
     app.register_blueprint(dashboard_bp, url_prefix='/api')
-    app.register_blueprint(tips_bp, url_prefix='/api')
     app.register_blueprint(calendar_bp, url_prefix='/api')
 
     from app.routes.auth_routes import auth_bp

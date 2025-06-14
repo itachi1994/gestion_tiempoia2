@@ -6,7 +6,6 @@ from app.models.planning_schema import PlanningSchema
 from app.models.task import Task
 from app.models.habit import StudyHabitSurvey
 from app.models.availability import Availability
-from app.models.course_load import CourseLoad
 from datetime import datetime, timedelta
 from app.utils.deepseek_api import generate_schedule_with_deepseek
 from app.models.user_schedule import UserSchedule
@@ -213,4 +212,5 @@ def get_schedule_history():
 # 3. El frontend puede mostrar el horario en un calendario, tabla o lista.
 # 4. Si deseas guardar el horario generado, puedes crear un nuevo modelo (por ejemplo, UserSchedule)
 #    y un endpoint POST para almacenar el resultado en la base de datos.
+# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
 # 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.

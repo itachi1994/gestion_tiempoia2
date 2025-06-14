@@ -15,9 +15,7 @@ class Task(db.Model):
     status = db.Column(db.String(20), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    course_load_id = db.Column(db.Integer, nullable=False)
     subjects_id = db.Column(db.Integer, nullable=False)
 
     user = db.relationship('User', back_populates="tasks")
@@ -47,5 +45,7 @@ class Task(db.Model):
             
             Task.send_email_reminder(task.user.email, subject, body)
 
+            task.reminder_sent = True
+            db.session.commit()
             task.reminder_sent = True
             db.session.commit()
