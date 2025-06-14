@@ -48,7 +48,6 @@ def create_app():
     # Registrar blueprints
     app.register_blueprint(availability_bp, url_prefix='/api')
     app.register_blueprint(subject_bp, url_prefix='/api')
-    # app.register_blueprint(load_bp, url_prefix='/api')
     app.register_blueprint(habit_bp, url_prefix='/api')
     app.register_blueprint(planning_bp, url_prefix='/api')
     app.register_blueprint(task_bp, url_prefix='/api')

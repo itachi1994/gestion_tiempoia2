@@ -263,20 +263,3 @@ def get_schedule_history():
     return user_schedule_many_schema.jsonify(schedules), 200
     return user_schedule_schema.jsonify(schedule_obj), 201
 
-@planning_bp.route('/planning/schedule/history', methods=['GET'])
-@jwt_required()
-def get_schedule_history():
-    user_id = get_jwt_identity()
-    schedules = UserSchedule.query.filter_by(user_id=user_id).order_by(UserSchedule.created_at.desc()).all()
-    return user_schedule_many_schema.jsonify(schedules), 200
-
-# --- INTEGRACIÓN CON EL SISTEMA ---
-# 1. El frontend debe hacer una petición GET a /api/planning/schedule con el token JWT.
-# 2. El backend responde con el horario sugerido en formato JSON.
-# 3. El frontend puede mostrar el horario en un calendario, tabla o lista.
-# 4. Si deseas guardar el horario generado, puedes crear un nuevo modelo (por ejemplo, UserSchedule)
-#    y un endpoint POST para almacenar el resultado en la base de datos.
-# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
-# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
-# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
-# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
