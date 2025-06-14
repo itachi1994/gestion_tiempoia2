@@ -39,7 +39,6 @@ def serialize_prefs(prefs):
     }
 
 def build_deepseek_prompt(tasks, availability, prefs, habit):
-    # Simplifica los datos para el prompt
     task_list = [
         {
             "title": t.title,
@@ -87,10 +86,8 @@ def call_deepseek_api(prompt):
     }
     response = requests.post(DEEPSEEK_API_URL, headers=headers, json=data, timeout=60)
     response.raise_for_status()
-    # DeepSeek responde con un string, intenta extraer el JSON
     content = response.json()["choices"][0]["message"]["content"]
     try:
-        # Busca el primer bloque JSON en la respuesta
         start = content.find('{')
         end = content.rfind('}') + 1
         schedule_json = content[start:end]
@@ -100,7 +97,6 @@ def call_deepseek_api(prompt):
     return schedule
 
 def schedule_object_to_events(schedule_obj):
-    """Convierte un objeto tipo {"Monday": [...]} a una lista de eventos para react-big-calendar."""
     if not schedule_obj or not isinstance(schedule_obj, dict):
         return []
     days_of_week = [
@@ -225,16 +221,13 @@ def get_saved_schedule():
     if not schedule_obj:
         return jsonify({"schedule": None, "message": "No hay horario guardado"}), 200
 
-    # Si el horario guardado es un string tipo JSON, intenta convertirlo a eventos
     try:
         schedule_data = schedule_obj.schedule_json
         if isinstance(schedule_data, str):
             schedule_data = json.loads(schedule_data)
-        # Si es un objeto tipo {"Monday": [...]}, conviértelo a eventos
         if isinstance(schedule_data, dict):
             events = schedule_object_to_events(schedule_data)
             return jsonify({"schedule": events}), 200
-        # Si ya es lista de eventos, devuélvela tal cual
         elif isinstance(schedule_data, list):
             return jsonify({"schedule": schedule_data}), 200
         else:
@@ -251,7 +244,6 @@ def save_schedule():
     if not schedule:
         return jsonify({"error": "No schedule provided"}), 400
 
-    # Si schedule es un dict (como el ejemplo), serialízalo a string antes de guardar
     import json
     if isinstance(schedule, dict):
         schedule_str = json.dumps(schedule, ensure_ascii=False)
@@ -261,6 +253,14 @@ def save_schedule():
     schedule_obj = UserSchedule(user_id=user_id, schedule_json=schedule_str)
     db.session.add(schedule_obj)
     db.session.commit()
+    return user_schedule_schema.jsonify(schedule_obj), 201
+
+@planning_bp.route('/planning/schedule/history', methods=['GET'])
+@jwt_required()
+def get_schedule_history():
+    user_id = get_jwt_identity()
+    schedules = UserSchedule.query.filter_by(user_id=user_id).order_by(UserSchedule.created_at.desc()).all()
+    return user_schedule_many_schema.jsonify(schedules), 200
     return user_schedule_schema.jsonify(schedule_obj), 201
 
 @planning_bp.route('/planning/schedule/history', methods=['GET'])

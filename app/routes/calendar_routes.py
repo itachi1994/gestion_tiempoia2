@@ -47,7 +47,6 @@ def build_deepseek_prompt(subjects, availability, prefs, habit):
 def get_full_week_schedule():
     user_id = get_jwt_identity()
 
-    # Obtener materias, disponibilidad, preferencias y hábitos
     subjects = Subject.query.filter_by(user_id=user_id).all()
     availability = Availability.query.filter_by(user_id=user_id).all()
     prefs = PlanningPreferences.query.filter_by(user_id=user_id).first()
@@ -59,7 +58,6 @@ def get_full_week_schedule():
     prompt = build_deepseek_prompt(subjects, availability, prefs, habit)
     try:
         response = generate_schedule_with_deepseek(prompt)
-        # Extraer JSON del string de respuesta
         start = response.find('{')
         end = response.rfind('}') + 1
         schedule_json = response[start:end]
@@ -67,18 +65,15 @@ def get_full_week_schedule():
     except Exception as e:
         return jsonify({"error": f"Error generando horario: {str(e)}"}), 500
 
-    # Convertir el horario sugerido a eventos para react-big-calendar
     events = []
     for day, blocks in schedule.items():
         for idx, block in enumerate(blocks):
-            # block: {"subject": "Matemáticas", "block": "08:00-10:00"}
             subject_name = block.get("subject") or block.get("title") or "Materia"
             block_time = block.get("block")
             if not block_time:
                 continue
             try:
                 start_hour, end_hour = block_time.split('-')
-                # Obtener la próxima fecha para el día de la semana
                 days_of_week = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
                 today = datetime.utcnow()
                 today_idx = today.weekday()
@@ -102,4 +97,3 @@ def get_full_week_schedule():
                 continue
 
     return jsonify(events)
-
