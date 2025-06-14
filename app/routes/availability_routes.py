@@ -47,3 +47,11 @@ def delete_availability(block_id):
     db.session.delete(block)
     db.session.commit()
     return jsonify({"message": "Bloque eliminado"}), 200
+
+
+@availability_bp.route('/availability', methods=['GET'])
+@jwt_required()
+def get_availability():
+    user_id = get_jwt_identity()
+    blocks = Availability.query.filter_by(user_id=user_id).all()
+    return avail_many_schema.jsonify(blocks), 200

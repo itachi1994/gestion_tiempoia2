@@ -99,6 +99,48 @@ def call_deepseek_api(prompt):
         schedule = {}
     return schedule
 
+def schedule_object_to_events(schedule_obj):
+    """Convierte un objeto tipo {"Monday": [...]} a una lista de eventos para react-big-calendar."""
+    if not schedule_obj or not isinstance(schedule_obj, dict):
+        return []
+    days_of_week = [
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    ]
+    today = datetime.utcnow()
+    today_idx = today.weekday()  # Monday=0
+    events = []
+    for day, blocks in schedule_obj.items():
+        if day not in days_of_week or not isinstance(blocks, list):
+            continue
+        target_idx = days_of_week.index(day)
+        diff = (target_idx - today_idx) % 7
+        date = today + timedelta(days=diff)
+        date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+        for idx, block in enumerate(blocks):
+            block_time = block.get("block") or block.get("time")
+            if not block_time:
+                continue
+            try:
+                start_hour, end_hour = block_time.split('-')
+                start_h, start_m = map(int, start_hour.split(':'))
+                end_h, end_m = map(int, end_hour.split(':'))
+                start_dt = date.replace(hour=start_h, minute=start_m)
+                end_dt = date.replace(hour=end_h, minute=end_m)
+                events.append({
+                    "id": f"{day}-{idx}-{block.get('task_id') or block.get('subject') or block.get('title') or 'block'}",
+                    "title": block.get("title") or block.get("subject") or "Bloque",
+                    "start": start_dt.isoformat(),
+                    "end": end_dt.isoformat(),
+                    "allDay": False,
+                    "type": "study",
+                    **({ "priority": block["priority"] } if "priority" in block else {}),
+                    **({ "status": block["status"] } if "status" in block else {}),
+                    **({ "description": block["description"] } if "description" in block else {}),
+                })
+            except Exception:
+                continue
+    return events
+
 @planning_bp.route('/planning', methods=['POST', 'PUT'])
 @jwt_required()
 def create_or_update_planning():
@@ -134,7 +176,6 @@ def get_planning_data():
     tasks = Task.query.filter_by(user_id=user_id).all()
     habit = StudyHabitSurvey.query.filter_by(user_id=user_id).first()
     availability = Availability.query.filter_by(user_id=user_id).all()
-    course_loads = CourseLoad.query.filter_by(user_id=user_id).all()
     prefs = PlanningPreferences.query.filter_by(user_id=user_id).first()
 
     return jsonify({
@@ -146,22 +187,14 @@ def get_planning_data():
             "priority": t.priority,
             "status": t.status,
             "created_at": t.created_at.strftime("%Y-%m-%d %H:%M") if t.created_at else None,
-            "course_load_id": t.course_load_id,
             "subjects_id": t.subjects_id
         } for t in tasks],
         "habit": serialize_habit(habit),
         "availability": [a.serialize() for a in availability],
-        "course_loads": [{
-            "id": cl.id,
-            "subject_id": cl.subject_id,
-            "weekly_hours": cl.weekly_hours,
-            "priority": cl.priority,
-            "next_exam": str(cl.next_exam) if cl.next_exam else None
-        } for cl in course_loads],
         "planning_preferences": serialize_prefs(prefs)
     }), 200
 
-@planning_bp.route('/planning/schedule', methods=['GET'])
+@planning_bp.route('/planning/schedule/generate', methods=['GET'])
 @jwt_required()
 def generate_schedule():
     user_id = get_jwt_identity()
@@ -184,6 +217,31 @@ def generate_schedule():
         return jsonify({"schedule": {}, "error": str(e)}), 500
     return jsonify({"schedule": schedule}), 200
 
+@planning_bp.route('/planning/schedule', methods=['GET'])
+@jwt_required()
+def get_saved_schedule():
+    user_id = get_jwt_identity()
+    schedule_obj = UserSchedule.query.filter_by(user_id=user_id).order_by(UserSchedule.created_at.desc()).first()
+    if not schedule_obj:
+        return jsonify({"schedule": None, "message": "No hay horario guardado"}), 200
+
+    # Si el horario guardado es un string tipo JSON, intenta convertirlo a eventos
+    try:
+        schedule_data = schedule_obj.schedule_json
+        if isinstance(schedule_data, str):
+            schedule_data = json.loads(schedule_data)
+        # Si es un objeto tipo {"Monday": [...]}, conviértelo a eventos
+        if isinstance(schedule_data, dict):
+            events = schedule_object_to_events(schedule_data)
+            return jsonify({"schedule": events}), 200
+        # Si ya es lista de eventos, devuélvela tal cual
+        elif isinstance(schedule_data, list):
+            return jsonify({"schedule": schedule_data}), 200
+        else:
+            return jsonify({"schedule": [], "message": "Formato de horario no reconocido"}), 200
+    except Exception:
+        return jsonify({"schedule": [], "message": "Error procesando el horario guardado"}), 200
+
 @planning_bp.route('/planning/schedule', methods=['POST'])
 @jwt_required()
 def save_schedule():
@@ -193,8 +251,14 @@ def save_schedule():
     if not schedule:
         return jsonify({"error": "No schedule provided"}), 400
 
-    # Guarda el horario como string JSON
-    schedule_obj = UserSchedule(user_id=user_id, schedule_json=json.dumps(schedule))
+    # Si schedule es un dict (como el ejemplo), serialízalo a string antes de guardar
+    import json
+    if isinstance(schedule, dict):
+        schedule_str = json.dumps(schedule, ensure_ascii=False)
+    else:
+        schedule_str = schedule
+
+    schedule_obj = UserSchedule(user_id=user_id, schedule_json=schedule_str)
     db.session.add(schedule_obj)
     db.session.commit()
     return user_schedule_schema.jsonify(schedule_obj), 201
@@ -212,5 +276,7 @@ def get_schedule_history():
 # 3. El frontend puede mostrar el horario en un calendario, tabla o lista.
 # 4. Si deseas guardar el horario generado, puedes crear un nuevo modelo (por ejemplo, UserSchedule)
 #    y un endpoint POST para almacenar el resultado en la base de datos.
+# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
+# 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
 # 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
 # 5. Si el usuario quiere modificar el horario, puedes permitirle editarlo y luego guardar los cambios.
